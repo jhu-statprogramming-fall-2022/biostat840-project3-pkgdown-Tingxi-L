@@ -1,5 +1,5 @@
 ---
-title: "`r sprintf('plot.matrix v%s', packageVersion('plot.matrix'))`"
+title: "Demonstration"
 author: 
 - name: "Sigbert Klinke" 
   email: sigbert@hu-berlin.de
@@ -13,6 +13,7 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown} 
   \usepackage[utf8]{inputenc} 
 ---
+`r sprintf('plot.matrix v%s', packageVersion('plot.matrix'))`
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(

@@ -1,3 +1,18 @@
+#Info for project 3 
+ 
+URL of original github package: https://github.com/sigbertklinke/plot.matrix
+
+URL for github page using pkgdown:
+
+Author of pkgdown website: Tingxi Long 
+
+5 ways of customization: 
+* added bootswatch theme in yaml file.
+* changed names in the navigation bar.
+* added documentation link in the Home page.
+* changed the title in the articles page and deleted menu bar.
+* changed fonts of the website.
+
 # plot.matrix
 Visualizes a matrix object plainly as heatmap. It provides a 
 

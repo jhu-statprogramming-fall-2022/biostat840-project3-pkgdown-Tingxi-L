@@ -1,0 +1,33 @@
+pkurl: ~
+template:
+  bootstrap: 5
+  bootswatch: lux
+  bslib:
+    pkgdown-nav-height: 100px
+    base_font: {google: "Roboto"}
+    heading_font: {google: "Roboto Slab"}
+    code_font: {google: "JetBrains Mono"}
+    code-bg: "#2b2b2b"
+navbar: 
+  title: "plot.matrix"
+  left:
+    - icon: fa-home fa-lg
+      href: index.html
+    - text: "Reference"
+      href: references/index.html
+    - text: "Articles"
+      href: articles/plot.matrix.html
+Home:
+  links:
+  - text: Documentation
+    href: https://pro.arcgis.com/en/pro-app/latest/help/analysis/geoprocessing/charts/scatter-plot-matrix.htm
+
+Reference:
+
+Articles:
+  - title: "Demostration"
+
+
+footer:
+  structure: 
+    right: developed_by

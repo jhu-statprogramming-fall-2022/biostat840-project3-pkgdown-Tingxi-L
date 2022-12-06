@@ -1,0 +1,176 @@
+---
+title: "Example analysis"
+author: 
+- name: "Tingxi Long" 
+date: "2022-12-08"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 4
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(plot.matrix)
+```
+
+### Introduction
+
+In this part, I will perform an example data analysis with R with [@tidytuesday; @big_mtcars]. 
+
+Objective: 
+
+-   What is the diversity of schools in the United States? 
+-   What is change in tuition cost for schools in the United States from 1985-2016?
+
+Intended audience:
+
+-   People who cares about quality of education. 
+-   High school and college students
+-   Parents and teachers are also potential audiences.
+
+Link to original data:The two datasets for this part of the assignment comes from  [TidyTuesday](https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-10-15).
+
+### Get the data
+
+```{r, message=FALSE}
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+library(here)
+```
+
+::: {.callout-note}
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+:::
+
+```{r, message=FALSE}
+# Check if the data already exist
+if(!dir.exists(here("data"))) { dir.create(here("data")) }
+
+if(!file.exists(here("data","tuesdata_bmc.RDS"))){
+  tuesdata <- tidytuesdayR::tt_load('2019-10-15')
+  big_mtcars <- tuesdata$big_epa_cars
+  
+  # save the files to RDS objects
+  saveRDS(tuesdata$big_epa_cars, file = here("data","tuesdata_bmc.RDS"))
+}
+```
+
+Let's load the data
+```{r, message=FALSE}
+big_mtcars<- readRDS(here("data","tuesdata_bmc.RDS"))
+```
+
+-   Here is a list of full [data dictionary](https://www.fueleconomy.gov/feg/ws/index.shtml#fuelType1) for what all the column names mean. 
+
+### What state in the Unites States has the most Asians?
+
+Using the `diversity_school` data, find the top 100 schools with the highest percentage of Asians in the student body, then group by the state of the school to see which state has most Asian groups in the student body.
+
+```{r}
+# 1.  Add a column that just calculate the frequency of categories.
+diversity_school$freq <- diversity_school$enrollment/diversity_school$total_enrollment
+
+# Select category=Asians.
+div <- diversity_school %>% 
+  filter(freq != 0) %>%
+  filter(category == "Asian") %>%
+  group_by(name) %>%
+  filter(!is.na(state)) %>%
+  head(50) %>%
+  mutate(state=fct_infreq(state)) %>%
+  group_by(state) %>%
+  count(state,sort = TRUE)
+```
+
+```{r}
+# 2. Plot the distribution
+fig1<-ggplot(div, aes(x=n, y=fct_reorder(.f=state,.x=n))) + geom_bar(stat='identity')+theme_bw()+ labs(title ="States of the top 50 schools with highest percentage of Asian group", subtitle = "Florida and Texas has 8/50 schools from the 
+top 50 schools with highest percentage of Asian group", caption = "Tingxi Long")+ ylab("State")+xlab("Number of schools")
+fig1
+```
+
+```{r}
+df <- diversity_school %>% 
+  filter(freq != 0) %>%
+  filter(category == "Black") %>%
+  filter(str_detect(name, "University")==TRUE)%>%
+  group_by(name) %>%
+  arrange(desc(freq)) 
+fig2a <-
+  ggplot(head(df,25),aes(fill=state,x=freq,y=fct_reorder(.f=name, .x = freq)))+
+  geom_bar(stat='identity')+xlab("proportion of black race")+ylab("School name")+
+  labs(title ="Top 25 Universities with highest 
+  percentage of Black group", subtitle = 
+  "Louisiana and Mississippi has 4 schools listed in the top 25 Universities 
+  with highest percentage of black group", caption = "Tingxi Long")
+fig2a
+fig2b <-
+  ggplot(head(df,100),aes(fill=state,x=freq,y=fct_reorder(.f=state, .x = freq)))+
+  geom_bar(stat='identity')+xlab("Number of universities")+ylab("State")+
+  labs(title ="States of the top 100 schools with highest percentage of Black group", subtitle = 
+  "Georgia has 9 Universities listed in the top 100 Universities 
+  with highest percentage of black group", caption = "Tingxi Long")
+fig2b
+```
+
+
+### What is the trend of tuition cost for colleges in the US?
+
+Using the `hist_tution` data, find the 4-year constant tuition cost for private, public and all institutions from 1985-2016.
+
+```{r}
+# 1.  Add a column that just keeps the first `year`.
+hist_tuition$in_year <- as.Date(as.character(substr(hist_tuition$year, 1, 4)), format = "%Y")
+# 2.  Plot the trend 
+ggplot(data=hist_tuition, aes(x=in_year, y = tuition_cost)) + 
+  geom_line(aes(colour = type))+facet_wrap(.~tuition_type,nrow = 3)+
+  labs(title ="Changes in tuition cost for different types of universities from 1985", 
+       subtitle = "An increasing trend is observed among public and private instituions", caption = "Tingxi Long")+geom_point(aes(colour=type))+
+  theme_classic()+theme(strip.background =element_rect(fill="azure2"))+
+  scale_x_date(date_breaks = "5 years", date_minor_breaks = "2 years")+
+  theme(axis.text.x = element_text(angle = -30, vjust = 0.5, hjust=0))+ylab("Cost of tuition (US dollor)")+xlab("Year")
+```
+```{r}
+# demonstrate calculate_CI
+tuition <- hist_tuition %>% 
+  filter(type == "All Institutions") %>%
+  filter(tuition_type == "All Constant")
+CI<- calculate_CI(tuition$tuition_cost,conf=0.95)
+CI
+```
+
+### Summary:
+
+Among the top 50 schools where the percentage of Asians is arranged in a decreasing order, Florida and Texas has 8/50 schools from the top 50 schools with highest percentage of Asian group.
+
+Among the top 25 Universities with highest percentage of Black group, Louisiana and Mississippi each has 4 schools in the list. 23 States has at least one University in the list of top 100 Universities with highest percentage of Black group.
+
+The past 20 years have seen an increasing trend in tuition cost for both private and public colleges and universities.By the 2016, the tuition cost for 4-year program in private universities is almost twice the price of the tuition cost in public universities. The 95% Confidence interval for the all constant tuition cost for all institutions from 1985-2016 is (11617.93,25391.75)
+
+
+``` {.r filename="Functions used in dplyr and tidyr and ggplot"}
+dplyr::
+  filter
+  summarise
+  group_by
+  arrange
+  mutate
+forcats::
+  fct_reorder
+  fct_infreq
+stringr::
+  string_detect
+ggplot:
+  geom_point
+  geom_bar
+  geom_line
+```
+
+
