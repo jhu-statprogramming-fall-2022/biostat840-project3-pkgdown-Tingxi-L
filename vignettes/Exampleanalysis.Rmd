@@ -43,6 +43,7 @@ library(tidyverse)
 library(ggplot2)
 library(lubridate)
 library(here)
+library(purrr)
 ```
 
 ::: {.callout-note}
@@ -53,40 +54,84 @@ Note that the `echo = FALSE` parameter was added to the code chunk to prevent pr
 # Check if the data already exist
 if(!dir.exists(here("data"))) { dir.create(here("data")) }
 
-if(!file.exists(here("data","tuesdata_bmc.RDS"))){
-  tuesdata <- tidytuesdayR::tt_load('2019-10-15')
-  big_mtcars <- tuesdata$big_epa_cars
-  
+if(!file.exists(here("data","tuesdata_song.RDS"))){
+  tuesdata <- tidytuesdayR::tt_load('2020-01-21')
+  spotify_songs <- tuesdata$spotify_songs
+    
   # save the files to RDS objects
-  saveRDS(tuesdata$big_epa_cars, file = here("data","tuesdata_bmc.RDS"))
+  saveRDS(tuesdata$spotify_songs, file = here("data","tuesdata_song.RDS"))
 }
 ```
 
 Let's load the data
 ```{r, message=FALSE}
-big_mtcars<- readRDS(here("data","tuesdata_bmc.RDS"))
+song<- readRDS(here("data","tuesdata_song.RDS"))
 ```
 
--   Here is a list of full [data dictionary](https://www.fueleconomy.gov/feg/ws/index.shtml#fuelType1) for what all the column names mean. 
+-   Here is a list of full [data dictionary](https://github.com/rfordatascience/tidytuesday/tree/master/data/2020/2020-01-21#readme) for what all the column names mean. 
 
-### What state in the Unites States has the most Asians?
+### What genre of music is most suitable for dancing ?
 
-Using the `diversity_school` data, find the top 100 schools with the highest percentage of Asians in the student body, then group by the state of the school to see which state has most Asian groups in the student body.
+
 
 ```{r}
-# 1.  Add a column that just calculate the frequency of categories.
-diversity_school$freq <- diversity_school$enrollment/diversity_school$total_enrollment
+# 1 demonstrate purrr.
+str_dat <- song |> 
+  split(song$playlist_genre) |>
+  map(.f = ~mean(.x$danceability))
+str_dat
+```
+```{r}
+song$temp_ener <- pmap_dbl(song,
+                     .f = function(tempo, energy, ...){
+                        tempo/energy
+                     })
+```
 
+```{r}
+songs_era <- song %>% 
+  mutate(
+    track_album_release_date = as.Date(track_album_release_date),
+    year = as.numeric(format(track_album_release_date,'%Y')),
+    era = case_when(year <= 2000 ~ "-2000",
+                    year > 2000 & year <= 2010 ~ "00-10",
+                    year > 2010 ~ "+2010"),
+    duration_min = duration_ms/60000)
+```
+
+```{r}
+songs_era %>%
+  filter(!is.na(era)) %>%
+  group_by(playlist_genre, era) %>%
+  ggplot() +
+  geom_boxplot(aes(era, track_popularity, fill=era), outlier.size=0) +
+  facet_wrap(~playlist_genre,nrow = 3) + 
+  labs(x='Era',y="popularity") +
+  theme_minimal() +
+  theme(legend.position = 'none')
+```
+
+
+```{r}
+fig1 <-song %>%
+  ggplot(aes(fill=playlist_genre,x=energy,y=loudness))+
+  geom_bar(stat='identity')+ 
+  labs(title ="Loudness of songs in relation to its energy index", subtitle = 
+         "EDM has the largest loudness", caption = "Tingxi Long")
+  + ylab("Loudness")+xlab("Energy index")
+fig1
+```
+
+```{r}
 # Select category=Asians.
-div <- diversity_school %>% 
-  filter(freq != 0) %>%
-  filter(category == "Asian") %>%
-  group_by(name) %>%
-  filter(!is.na(state)) %>%
-  head(50) %>%
-  mutate(state=fct_infreq(state)) %>%
-  group_by(state) %>%
-  count(state,sort = TRUE)
+songs_era %>%
+  na.omit(era) %>%
+  ggplot(aes(x=playlist_genre,y=duration_min)) +
+  geom_violin(aes(fill=playlist_genre)) +
+  facet_grid(~era) +
+  theme_minimal() +
+  labs(x='Duration (min)') +
+  theme(legend.position = 'none')
 ```
 
 ```{r}
@@ -168,9 +213,9 @@ forcats::
 stringr::
   string_detect
 ggplot:
-  geom_point
+  geom_boxplot
   geom_bar
-  geom_line
+  geom_violin
 ```
 
 
