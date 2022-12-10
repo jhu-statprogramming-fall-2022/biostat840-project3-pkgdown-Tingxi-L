@@ -20,20 +20,15 @@ library(plot.matrix)
 
 ### Introduction
 
-In this part, I will perform an example data analysis with R with [@tidytuesday; @big_mtcars]. 
+In this part, I will perform an example data analysis with R with [@tidytuesday; @spotify_songs]. 
 
 Objective: 
 
--   What is the diversity of schools in the United States? 
--   What is change in tuition cost for schools in the United States from 1985-2016?
+-   What is the track popularity of genre by era?
+-   What is the loudness of songs in relation to its energy index
+-   What is song Duration by Playlist Genre and Era
 
-Intended audience:
-
--   People who cares about quality of education. 
--   High school and college students
--   Parents and teachers are also potential audiences.
-
-Link to original data:The two datasets for this part of the assignment comes from  [TidyTuesday](https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-10-15).
+Link to original data: The datasets for this part of the assignment comes from  [TidyTuesday](https://github.com/rfordatascience/tidytuesday/tree/master/data/2020/2020-01-21).
 
 ### Get the data
 
@@ -72,8 +67,6 @@ song<- readRDS(here("data","tuesdata_song.RDS"))
 
 ### What genre of music is most suitable for dancing ?
 
-
-
 ```{r}
 # 1 demonstrate purrr.
 str_dat <- song |> 
@@ -99,27 +92,33 @@ songs_era <- song %>%
     duration_min = duration_ms/60000)
 ```
 
+## Plot 1
+
 ```{r}
+f <- factor(c("2000", "00-10", "2010"), levels = c("2000", "00-10", "2010"))
 songs_era %>%
   filter(!is.na(era)) %>%
   group_by(playlist_genre, era) %>%
   ggplot() +
-  geom_boxplot(aes(era, track_popularity, fill=era), outlier.size=0) +
+  geom_boxplot(aes(x=fct_inorder(era), track_popularity, fill=era), outlier.size=0) +
   facet_wrap(~playlist_genre,nrow = 3) + 
   labs(x='Era',y="popularity") +
   theme_minimal() +
-  theme(legend.position = 'none')
+  theme(legend.position = 'none')+
+  labs(title = "Track Popularity by Era and Playlist Genre",
+       subtitle = "Data from Spotify", caption = "Tingxi Long",
+       x='Era',
+       y="popularity")
 ```
-
+## plot 2
 
 ```{r}
-fig1 <-song %>%
+fig2 <-song %>%
   ggplot(aes(fill=playlist_genre,x=energy,y=loudness))+
   geom_bar(stat='identity')+ 
   labs(title ="Loudness of songs in relation to its energy index", subtitle = 
-         "EDM has the largest loudness", caption = "Tingxi Long")
-  + ylab("Loudness")+xlab("Energy index")
-fig1
+         "EDM has the largest loudness", caption = "Tingxi Long")+ylab("Loudness")+xlab("Energy index")
+fig2
 ```
 
 ```{r}
@@ -128,88 +127,48 @@ songs_era %>%
   na.omit(era) %>%
   ggplot(aes(x=playlist_genre,y=duration_min)) +
   geom_violin(aes(fill=playlist_genre)) +
-  facet_grid(~era) +
+  facet_grid(~fct_inorder(era)) +
   theme_minimal() +
   labs(x='Duration (min)') +
+  labs(title = "Song Duration by Playlist Genre and Era",
+       subtitle = "Data from Spotify", caption = "Tingxi Long",
+       x='Duration (min)') +
   theme(legend.position = 'none')
 ```
 
-```{r}
-# 2. Plot the distribution
-fig1<-ggplot(div, aes(x=n, y=fct_reorder(.f=state,.x=n))) + geom_bar(stat='identity')+theme_bw()+ labs(title ="States of the top 50 schools with highest percentage of Asian group", subtitle = "Florida and Texas has 8/50 schools from the 
-top 50 schools with highest percentage of Asian group", caption = "Tingxi Long")+ ylab("State")+xlab("Number of schools")
-fig1
-```
+## Use Plot.matrix
 
 ```{r}
-df <- diversity_school %>% 
-  filter(freq != 0) %>%
-  filter(category == "Black") %>%
-  filter(str_detect(name, "University")==TRUE)%>%
-  group_by(name) %>%
-  arrange(desc(freq)) 
-fig2a <-
-  ggplot(head(df,25),aes(fill=state,x=freq,y=fct_reorder(.f=name, .x = freq)))+
-  geom_bar(stat='identity')+xlab("proportion of black race")+ylab("School name")+
-  labs(title ="Top 25 Universities with highest 
-  percentage of Black group", subtitle = 
-  "Louisiana and Mississippi has 4 schools listed in the top 25 Universities 
-  with highest percentage of black group", caption = "Tingxi Long")
-fig2a
-fig2b <-
-  ggplot(head(df,100),aes(fill=state,x=freq,y=fct_reorder(.f=state, .x = freq)))+
-  geom_bar(stat='identity')+xlab("Number of universities")+ylab("State")+
-  labs(title ="States of the top 100 schools with highest percentage of Black group", subtitle = 
-  "Georgia has 9 Universities listed in the top 100 Universities 
-  with highest percentage of black group", caption = "Tingxi Long")
-fig2b
+index <- song[,c("danceability","energy","valence","acousticness")]
+cindex<-cor(index,use = "complete.obs")
+plot(as.assoc(cindex), col=topo.colors, main="My title",
+     axis.col=list(side=1, las=1),axis.row=list(side=2, las=1),ann = FALSE)
+title(sub = "My subtitle")
 ```
 
 
-### What is the trend of tuition cost for colleges in the US?
-
-Using the `hist_tution` data, find the 4-year constant tuition cost for private, public and all institutions from 1985-2016.
-
 ```{r}
-# 1.  Add a column that just keeps the first `year`.
-hist_tuition$in_year <- as.Date(as.character(substr(hist_tuition$year, 1, 4)), format = "%Y")
-# 2.  Plot the trend 
-ggplot(data=hist_tuition, aes(x=in_year, y = tuition_cost)) + 
-  geom_line(aes(colour = type))+facet_wrap(.~tuition_type,nrow = 3)+
-  labs(title ="Changes in tuition cost for different types of universities from 1985", 
-       subtitle = "An increasing trend is observed among public and private instituions", caption = "Tingxi Long")+geom_point(aes(colour=type))+
-  theme_classic()+theme(strip.background =element_rect(fill="azure2"))+
-  scale_x_date(date_breaks = "5 years", date_minor_breaks = "2 years")+
-  theme(axis.text.x = element_text(angle = -30, vjust = 0.5, hjust=0))+ylab("Cost of tuition (US dollor)")+xlab("Year")
-```
-```{r}
-# demonstrate calculate_CI
-tuition <- hist_tuition %>% 
-  filter(type == "All Institutions") %>%
-  filter(tuition_type == "All Constant")
-CI<- calculate_CI(tuition$tuition_cost,conf=0.95)
-CI
+data(air.pvalue)
+plot(as.pvalue(air.pvalue),main="p values of airquality",border=NA)
+title(sub = "My subtitle")
 ```
 
 ### Summary:
 
-Among the top 50 schools where the percentage of Asians is arranged in a decreasing order, Florida and Texas has 8/50 schools from the top 50 schools with highest percentage of Asian group.
+Generally, the songs produced in 2000-2010 has lowest popularity. But we only see a constant decreasing in popularity for rock songs among 3 eras.
 
-Among the top 25 Universities with highest percentage of Black group, Louisiana and Mississippi each has 4 schools in the list. 23 States has at least one University in the list of top 100 Universities with highest percentage of Black group.
+EDM songs are more loud regardless of the energy index. 
 
-The past 20 years have seen an increasing trend in tuition cost for both private and public colleges and universities.By the 2016, the tuition cost for 4-year program in private universities is almost twice the price of the tuition cost in public universities. The 95% Confidence interval for the all constant tuition cost for all institutions from 1985-2016 is (11617.93,25391.75)
+Generally, the song duration is decreasing by time. But the duration of EDM songs has larger variance during 2000-2010.
 
 
 ``` {.r filename="Functions used in dplyr and tidyr and ggplot"}
 dplyr::
   filter
-  summarise
   group_by
   arrange
   mutate
-forcats::
-  fct_reorder
-  fct_infreq
+  case_when
 stringr::
   string_detect
 ggplot:
