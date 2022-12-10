@@ -14,20 +14,17 @@ navbar:
     - icon: fa-home fa-lg
       href: index.html
     - text: "Reference"
-      href: references/index.html
+      href: reference/index.html
     - text: "Articles"
       href: articles/plot.matrix.html
+    - text: "Example analysis"
+      href: articles/Exampleanalysis.html
+      
 Home:
   links:
   - text: Documentation
     href: https://pro.arcgis.com/en/pro-app/latest/help/analysis/geoprocessing/charts/scatter-plot-matrix.htm
 
-Reference:
-
 Articles:
   - title: "Demostration"
 
-
-footer:
-  structure: 
-    right: developed_by

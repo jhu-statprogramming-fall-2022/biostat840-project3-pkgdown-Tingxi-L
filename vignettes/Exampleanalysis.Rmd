@@ -65,7 +65,7 @@ song<- readRDS(here("data","tuesdata_song.RDS"))
 
 -   Here is a list of full [data dictionary](https://github.com/rfordatascience/tidytuesday/tree/master/data/2020/2020-01-21#readme) for what all the column names mean. 
 
-### What genre of music is most suitable for dancing ?
+### Data wrangling using purrr
 
 ```{r}
 # 1 demonstrate purrr.
@@ -92,7 +92,7 @@ songs_era <- song %>%
     duration_min = duration_ms/60000)
 ```
 
-## Plot 1
+## Plots
 
 ```{r}
 f <- factor(c("2000", "00-10", "2010"), levels = c("2000", "00-10", "2010"))
