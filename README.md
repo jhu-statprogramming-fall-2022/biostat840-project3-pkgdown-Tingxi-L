@@ -2,7 +2,7 @@
  
 URL of original github package: https://github.com/sigbertklinke/plot.matrix
 
-URL for github page using pkgdown:
+URL for github page using pkgdown:https://jhu-statprogramming-fall-2022.github.io/biostat840-project3-pkgdown-Tingxi-L/
 
 Author of pkgdown website: Tingxi Long 
 
